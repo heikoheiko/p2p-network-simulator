@@ -6,18 +6,18 @@ from peermanager import PingHandler
 from peermanager import PeerRequestHandler
 from disruptions import Downtime
 from disruptions import Slowdown
-from animate import Visualizer
 
 NUM_PEERS = 50
 SIM_DURATION = 30
 KBit = 1024/8
+VISUALIZATION = True
 
 def managed_peer(name, env):
     p = Peer(name, env)
     p.services.append(ConnectionManager(p))
     p.services.append(PeerRequestHandler())
     p.services.append(PingHandler())
-    #p.services.append(Downtime(env, p))
+    p.services.append(Downtime(env, p))
     p.services.append(Slowdown(env, p))
     return p
 
@@ -44,14 +44,17 @@ env = simpy.Environment()
 
 # bootstrapping peer
 pserver = managed_peer('PeerServer', env)
-pserver.bandwidth_ul = pserver.bandwidth_dl =  128 * KBit # super slow
+pserver.bandwidth_ul = pserver.bandwidth_dl = 128 * KBit # super slow
 
 # other peers
 peers = create_peers(pserver, NUM_PEERS)
 
 print 'starting sim'
-Visualizer(env, peers)
-#env.run(until=SIM_DURATION)
+if VISUALIZATION:
+    from animate import Visualizer
+    Visualizer(env, peers)
+else:
+    env.run(until=SIM_DURATION)
 
 
 
